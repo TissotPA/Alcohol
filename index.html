@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlcoTrack - Suivi de soirée</title>
+    <title>AlcoTrack Pro - Suivi & Historiques</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,138 +13,186 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Header -->
         <header class="flex justify-between items-center border-b border-gray-800 pb-4">
             <div class="flex items-center gap-3">
                 <i data-lucide="beer" class="text-amber-500 w-8 h-8"></i>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">AlcoTrack</h1>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">AlcoTrack Pro</h1>
             </div>
             <span class="text-xs text-gray-500 bg-gray-950 px-3 py-1.5 rounded-full border border-gray-800 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Estimation indicative
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Stockage 100% Local (Privé)
             </span>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Grille Principale -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
+            <!-- PANNEL GAUCHE : Configuration, Favoris & Ajout -->
             <div class="space-y-6">
+                <!-- Profil -->
                 <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="user" class="text-blue-400 w-5 h-5"></i> Mon Profil</h2>
+                    <h2 class="text-md font-semibold mb-3 flex items-center gap-2"><i data-lucide="user" class="text-blue-400 w-5 h-5"></i> Mon Profil</h2>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Sexe biologique</label>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setSexe('M')" id="btn-sexe-M" class="py-2 rounded-lg border font-medium transition-all bg-blue-600/20 border-blue-500 text-blue-300 cursor-pointer">Homme</button>
-                                <button onclick="setSexe('F')" id="btn-sexe-F" class="py-2 rounded-lg border font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer">Femme</button>
+                                <button onclick="setSexe('M')" id="btn-sexe-M" class="py-1.5 rounded-lg border text-sm font-medium transition-all cursor-pointer">Homme</button>
+                                <button onclick="setSexe('F')" id="btn-sexe-F" class="py-1.5 rounded-lg border text-sm font-medium transition-all cursor-pointer">Femme</button>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Poids (kg)</label>
-                                <input type="number" id="profil-poids" value="75" onchange="calculerTout()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500">
+                                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Poids (kg)</label>
+                                <input type="number" id="profil-poids" value="75" onchange="sauvegarderProfil()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500 text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Taille (cm)</label>
-                                <input type="number" id="profil-taille" value="175" onchange="calculerTout()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500">
+                                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Taille (cm)</label>
+                                <input type="number" id="profil-taille" value="175" onchange="sauvegarderProfil()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500 text-sm">
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Préréglages Rapides (Favoris personnalisés) -->
                 <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="plus-circle" class="text-emerald-400 w-5 h-5"></i> Ajouter une boisson</h2>
+                    <h2 class="text-md font-semibold mb-3 flex items-center gap-2"><i data-lucide="star" class="text-amber-400 w-5 h-5"></i> Préréglages rapides</h2>
+                    <div class="grid grid-cols-1 gap-2" id="zone-favoris">
+                        <!-- Généré dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Ajouter manuellement -->
+                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm">
+                    <h2 class="text-md font-semibold mb-3 flex items-center gap-2"><i data-lucide="plus-circle" class="text-emerald-400 w-5 h-5"></i> Boisson sur mesure</h2>
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Quantité (ml)</label>
-                                <input type="number" id="drink-volume" value="250" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-emerald-500">
+                                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Quantité (ml)</label>
+                                <input type="number" id="drink-volume" value="250" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white text-sm focus:outline-none focus:border-emerald-500">
                             </div>
                             <div>
-                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Degré (° ou %)</label>
-                                <input type="number" step="0.1" id="drink-degree" value="5" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-emerald-500">
+                                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Degré (%)</label>
+                                <input type="number" step="0.1" id="drink-degree" value="5" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white text-sm focus:outline-none focus:border-emerald-500">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Heure de consommation</label>
+                            <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Heure de consommation</label>
                             <div class="flex gap-2">
-                                <input type="time" id="drink-time" class="flex-1 bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-emerald-500">
-                                <button onclick="setHeureActuelle()" class="bg-gray-800 hover:bg-gray-700 p-2 rounded-lg border border-gray-700 transition-colors cursor-pointer" title="Heure actuelle">
-                                    <i data-lucide="clock" class="w-5 h-5 text-gray-300"></i>
+                                <input type="time" id="drink-time" class="flex-1 bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white text-sm focus:outline-none focus:border-emerald-500">
+                                <button onclick="setHeureActuelle()" class="bg-gray-800 hover:bg-gray-700 p-2 rounded-lg border border-gray-700 cursor-pointer">
+                                    <i data-lucide="clock" class="w-4 h-4 text-gray-300"></i>
                                 </button>
                             </div>
                         </div>
-                        <button onclick="ajouterBoisson()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                            <i data-lucide="plus" class="w-5 h-5"></i> Enregistrer le verre
+                        <button onclick="ajouterBoissonManuelle()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2 rounded-lg text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Enregistrer le verre
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="md:col-span-2 space-y-6">
+            <!-- PANEL DROIT : Dashboard, Graphique & Historiques -->
+            <div class="lg:col-span-2 space-y-6">
                 
+                <!-- KPI Dashboard -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
-                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                             <span id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Taux Actuel
                         </span>
-                        <div class="my-2">
+                        <div class="my-1">
                             <span id="kpi-taux-actuel" class="text-3xl font-extrabold text-white">0.00</span>
-                            <span class="text-sm text-gray-400 font-medium"> g/L</span>
+                            <span class="text-sm text-gray-400"> g/L</span>
                         </div>
-                        <span id="kpi-conduite-status" class="text-xs font-medium text-emerald-400">Conduite autorisée (Vigilance)</span>
+                        <span id="kpi-conduite-status" class="text-xs font-semibold text-emerald-400">À jeun</span>
                     </div>
 
                     <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
-                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5 text-orange-400">
-                            <i data-lucide="trending-up" class="w-4 h-4"></i> Pic de la soirée
+                        <span class="text-[10px] text-orange-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Pic de la soirée
                         </span>
-                        <div class="my-2">
+                        <div class="my-1">
                             <span id="kpi-taux-max" class="text-3xl font-extrabold text-white">0.00</span>
-                            <span class="text-sm text-gray-400 font-medium"> g/L</span>
+                            <span class="text-sm text-gray-400"> g/L</span>
                         </div>
                         <span id="kpi-heure-reprise" class="text-xs text-gray-400 italic">Reprise voiture : immédiate</span>
                     </div>
 
                     <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
-                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-400">
-                            <i data-lucide="glass-water" class="w-4 h-4"></i> Consommation totale
+                        <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="glass-water" class="w-3.5 h-3.5"></i> Volume total
                         </span>
-                        <div class="my-2">
+                        <div class="my-1">
                             <span id="kpi-total-verres" class="text-3xl font-extrabold text-white">0</span>
-                            <span class="text-sm text-gray-400 font-medium"> verres standard</span>
+                            <span class="text-sm text-gray-400"> verres</span>
                         </div>
-                        <button onclick="reinitialiserSoiree()" class="text-left text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Réinitialiser la soirée
+                        <button onclick="cloturerSoiree()" class="w-full mt-2 bg-amber-600/10 hover:bg-amber-600/20 text-amber-400 hover:text-amber-300 border border-amber-500/30 font-semibold py-1.5 px-3 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i data-lucide="archive" class="w-3.5 h-3.5"></i> Clôturer la soirée
                         </button>
                     </div>
                 </div>
 
+                <!-- Graphique -->
                 <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="activity" class="text-purple-400 w-5 h-5"></i> Courbe d'alcoolémie présumée</h2>
+                        <h2 class="text-md font-semibold flex items-center gap-2"><i data-lucide="activity" class="text-purple-400 w-5 h-5"></i> Évolution de l'alcoolémie</h2>
                         <button onclick="calculerTout()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 flex items-center gap-1.5 transition-colors cursor-pointer">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser l'état
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser
                         </button>
                     </div>
-                    <div class="h-64 relative">
+                    <div class="h-56 relative">
                         <canvas id="evolutionChart"></canvas>
                     </div>
                 </div>
 
-                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl">
-                    <h2 class="text-lg font-semibold mb-3 flex items-center gap-2"><i data-lucide="history" class="text-gray-400 w-5 h-5"></i> Verres enregistrés</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-gray-800 text-xs text-gray-400 uppercase font-bold">
-                                    <th class="py-2">Heure</th>
-                                    <th class="py-2">Volume</th>
-                                    <th class="py-2">Degré</th>
-                                    <th class="py-2 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="liste-boissons" class="divide-y divide-gray-800/50 text-sm">
+                <!-- Onglets Bas de page : Verres du moment VS Archives des soirées -->
+                <div class="bg-gray-900/50 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
+                    <div class="flex border-b border-gray-800 bg-gray-950/40">
+                        <button onclick="switchTab('tab-verres')" id="btn-tab-verres" class="flex-1 py-3 text-sm font-semibold border-b-2 border-purple-500 text-purple-400 cursor-pointer">
+                            Verres de la soirée en cours
+                        </button>
+                        <button onclick="switchTab('tab-archives')" id="btn-tab-archives" class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer">
+                            Historique des anciennes soirées (<span id="count-archives">0</span>)
+                        </button>
+                    </div>
+
+                    <!-- Contenu Onglet 1 : Verres Actuels -->
+                    <div id="content-tab-verres" class="p-5">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-800 text-xs text-gray-400 uppercase font-bold">
+                                        <th class="py-2">Heure</th>
+                                        <th class="py-2">Type</th>
+                                        <th class="py-2">Volume</th>
+                                        <th class="py-2">Degré</th>
+                                        <th class="py-2 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="liste-boissons" class="divide-y divide-gray-800/50">
+                                    <!-- JS -->
                                 </tbody>
-                        </table>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Contenu Onglet 2 : Archives -->
+                    <div id="content-tab-archives" class="p-5 hidden space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-800 text-xs text-gray-400 uppercase font-bold">
+                                        <th class="py-2">Date de la soirée</th>
+                                        <th class="py-2">Total verres</th>
+                                        <th class="py-2">Taux Max atteint</th>
+                                        <th class="py-2 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="liste-archives" class="divide-y divide-gray-800/50">
+                                    <!-- JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -152,106 +200,306 @@
         </div>
     </div>
 
+    <!-- ZONE POPUP CUSTOM STYLISÉE -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+        <div class="bg-gray-900 border border-gray-800 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4 scale-95 transition-transform duration-200" id="modal-container">
+            <div class="flex items-center gap-3 border-b border-gray-800 pb-3">
+                <div id="modal-icon-container" class="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+                    <i id="modal-icon" data-lucide="help-circle" class="w-6 h-6"></i>
+                </div>
+                <h3 id="modal-title" class="text-lg font-bold text-white">Confirmation</h3>
+            </div>
+            <p id="modal-message" class="text-sm text-gray-400 leading-relaxed"></p>
+            <div id="modal-actions" class="flex gap-3 justify-end pt-2">
+                <!-- Les boutons injectés dynamiquement -->
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- ÉTAT DE L'APPLICATION ---
+        // --- MES PRÉRÉGLAGES DEMANDÉS ---
+        const BOISSONS_PRESETS = [
+            { nom: "Pinte de Bière", vol: 500, deg: 6.0, icon: "beer", color: "text-amber-500" },
+            { nom: "Rhum Coca (25 cL)", vol: 250, deg: 6.4, icon: "glass-water", color: "text-amber-800" } 
+        ];
+
+        // --- ÉTAT GLOBAL ---
         let profil = { sexe: 'M', poids: 75, taille: 175 };
-        let boissons = [];
+        let boissonsActuelles = [];
+        let archivesSoirees = [];
         let chartInstance = null;
+        let actionCallback = null; // Stocke la fonction à exécuter après confirmation
 
-        const SEUIL_LEGAL = 0.5; 
+        const SEUIL_LEGAL = 0.5;
 
-        // --- INITIALISATION ---
         window.onload = function() {
             lucide.createIcons();
             setHeureActuelle();
             chargerDonnees();
+            renderFavoris();
             initChart();
             calculerTout();
-            
-            // Auto-refresh toutes les minutes pour mettre à jour le taux réel en continu
-            setInterval(calculerTout, 60000);
+            setInterval(calculerTout, 60000); 
         };
+
+        // --- ENGIN DE MODALE PERSONNALISÉE ---
+        function openModal(options) {
+            const modal = document.getElementById('custom-modal');
+            const container = document.getElementById('modal-container');
+            
+            document.getElementById('modal-title').innerText = options.title || 'Attention';
+            document.getElementById('modal-message').innerText = options.message || '';
+            
+            const iconEl = document.getElementById('modal-icon');
+            iconEl.setAttribute('data-lucide', options.icon || 'help-circle');
+            
+            const iconBox = document.getElementById('modal-icon-container');
+            iconBox.className = `p-2 rounded-lg ${options.iconColorClass || 'bg-purple-500/10 text-purple-400'}`;
+            
+            const actionsZone = document.getElementById('modal-actions');
+            actionsZone.innerHTML = '';
+
+            if (options.type === 'confirm') {
+                actionsZone.innerHTML = `
+                    <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold border border-gray-700 transition-colors cursor-pointer">Annuler</button>
+                    <button id="modal-confirm-btn" class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${options.btnConfirmClass || 'bg-purple-600 hover:bg-purple-700 text-white'}">${options.confirmText || 'Confirmer'}</button>
+                `;
+                actionCallback = options.onConfirm;
+                document.getElementById('modal-confirm-btn').onclick = function() {
+                    if(actionCallback) actionCallback();
+                    closeModal();
+                };
+            } else {
+                // Mode Alert standard
+                actionsZone.innerHTML = `
+                    <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer">D'accord</button>
+                `;
+            }
+
+            lucide.createIcons();
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                container.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            const container = document.getElementById('modal-container');
+            modal.classList.add('opacity-0');
+            container.classList.add('scale-95');
+            actionCallback = null;
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
 
         function setHeureActuelle() {
             const maintenant = new Date();
-            const heures = String(maintenant.getHours()).padStart(2, '0');
-            const minutes = String(maintenant.getMinutes()).padStart(2, '0');
-            document.getElementById('drink-time').value = `${heures}:${minutes}`;
+            document.getElementById('drink-time').value = `${String(maintenant.getHours()).padStart(2, '0')}:${String(maintenant.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function renderFavoris() {
+            const zone = document.getElementById('zone-favoris');
+            zone.innerHTML = '';
+            BOISSONS_PRESETS.forEach(p => {
+                zone.innerHTML += `
+                    <button onclick="ajouterPreset(${p.vol}, ${p.deg})" class="w-full p-3 bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-xl flex items-center gap-3 text-left transition-all text-sm cursor-pointer group hover:border-purple-500/50">
+                        <i data-lucide="${p.icon}" class="${p.color} w-5 h-5 shrink-0 group-hover:scale-110 transition-transform"></i>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-200">${p.nom}</div>
+                            <div class="text-xs text-gray-400">${p.vol} ml · ${p.deg} %</div>
+                        </div>
+                        <i data-lucide="plus" class="w-4 h-4 text-gray-600 group-hover:text-purple-400 transition-colors"></i>
+                    </button>
+                `;
+            });
+            lucide.createIcons();
         }
 
         function setSexe(sexe) {
             profil.sexe = sexe;
-            document.getElementById('btn-sexe-M').className = sexe === 'M' ? 'py-2 rounded-lg border font-medium transition-all bg-blue-600/20 border-blue-500 text-blue-300 cursor-pointer' : 'py-2 rounded-lg border font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer';
-            document.getElementById('btn-sexe-F').className = sexe === 'F' ? 'py-2 rounded-lg border font-medium transition-all bg-pink-600/20 border-pink-500 text-pink-300 cursor-pointer' : 'py-2 rounded-lg border font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer';
-            sauvegarderDonnees();
+            document.getElementById('btn-sexe-M').className = sexe === 'M' ? 'py-1.5 rounded-lg border text-sm font-medium transition-all bg-blue-600/20 border-blue-500 text-blue-300 cursor-pointer' : 'py-1.5 rounded-lg border text-sm font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer';
+            document.getElementById('btn-sexe-F').className = sexe === 'F' ? 'py-1.5 rounded-lg border text-sm font-medium transition-all bg-pink-600/20 border-pink-500 text-pink-300 cursor-pointer' : 'py-1.5 rounded-lg border text-sm font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer';
+            sauvegarderProfil();
             calculerTout();
         }
 
-        // --- PERSISTENCE (Local Storage) ---
-        function sauvegarderDonnees() {
+        function sauvegarderProfil() {
             profil.poids = parseFloat(document.getElementById('profil-poids').value) || 75;
             profil.taille = parseFloat(document.getElementById('profil-taille').value) || 175;
-            localStorage.setItem('alcotrack_profil', JSON.stringify(profil));
-            localStorage.setItem('alcotrack_boissons', JSON.stringify(boissons));
+            localStorage.setItem('alcotrack_pro_profil', JSON.stringify(profil));
+        }
+
+        function sauvegarderDonnees() {
+            sauvegarderProfil();
+            localStorage.setItem('alcotrack_pro_boissons', JSON.stringify(boissonsActuelles));
+            localStorage.setItem('alcotrack_pro_archives', JSON.stringify(archivesSoirees));
         }
 
         function chargerDonnees() {
-            const localProfil = localStorage.getItem('alcotrack_profil');
-            const localBoissons = localStorage.getItem('alcotrack_boissons');
-            if(localProfil) {
-                profil = JSON.parse(localProfil);
+            const lp = localStorage.getItem('alcotrack_pro_profil');
+            const lb = localStorage.getItem('alcotrack_pro_boissons');
+            const la = localStorage.getItem('alcotrack_pro_archives');
+            
+            if(lp) {
+                profil = JSON.parse(lp);
                 document.getElementById('profil-poids').value = profil.poids;
                 document.getElementById('profil-taille').value = profil.taille;
-                setSexe(profil.sexe);
             }
-            if(localBoissons) {
-                boissons = JSON.parse(localBoissons);
-            }
+            setSexe(profil.sexe);
+
+            if(lb) boissonsActuelles = JSON.parse(lb);
+            if(la) archivesSoirees = JSON.parse(la);
+            
+            document.getElementById('count-archives').innerText = archivesSoirees.length;
         }
 
-        function reinitialiserSoiree() {
-            if(confirm("Voulez-vous vraiment effacer l'historique de cette soirée ?")) {
-                boissons = [];
-                sauvegarderDonnees();
-                calculerTout();
-            }
+        function ajouterPreset(volume, degre) {
+            const maintenant = new Date();
+            boissonsActuelles.push({
+                id: Date.now(),
+                volume: volume,
+                degre: degre,
+                timestamp: maintenant.getTime(),
+                nomPreset: BOISSONS_PRESETS.find(p => p.vol === volume && p.deg === degre)?.nom || "Verre"
+            });
+            finaliserAjoutBoisson();
         }
 
-        // --- LOGIQUE METIER & ALGORITHME ---
-        function ajouterBoisson() {
+        function ajouterBoissonManuelle() {
             const vol = parseFloat(document.getElementById('drink-volume').value);
             const deg = parseFloat(document.getElementById('drink-degree').value);
             const timeStr = document.getElementById('drink-time').value;
-
             if(!vol || !deg || !timeStr) return;
 
             const [h, m] = timeStr.split(':').map(Number);
             const dateBoisson = new Date();
             dateBoisson.setHours(h, m, 0, 0);
 
-            // Gestion du passage à minuit
-            if(dateBoisson > new Date()) {
-                dateBoisson.setDate(dateBoisson.getDate() - 1);
-            }
+            if(dateBoisson > new Date()) dateBoisson.setDate(dateBoisson.getDate() - 1);
 
-            boissons.push({
+            boissonsActuelles.push({
                 id: Date.now(),
                 volume: vol,
                 degre: deg,
-                timestamp: dateBoisson.getTime()
+                timestamp: dateBoisson.getTime(),
+                nomPreset: "Sur mesure"
             });
+            finaliserAjoutBoisson();
+        }
 
-            boissons.sort((a, b) => a.timestamp - b.timestamp);
-
+        function finaliserAjoutBoisson() {
+            boissonsActuelles.sort((a, b) => a.timestamp - b.timestamp);
             sauvegarderDonnees();
             calculerTout();
-            setHeureActuelle(); 
+            setHeureActuelle();
         }
 
         function supprimerBoisson(id) {
-            boissons = boissons.filter(b => b.id !== id);
+            boissonsActuelles = boissonsActuelles.filter(b => b.id !== id);
             sauvegarderDonnees();
             calculerTout();
+        }
+
+        function switchTab(tabId) {
+            if(tabId === 'tab-verres') {
+                document.getElementById('content-tab-verres').classList.remove('hidden');
+                document.getElementById('content-tab-archives').classList.add('hidden');
+                document.getElementById('btn-tab-verres').className = "flex-1 py-3 text-sm font-semibold border-b-2 border-purple-500 text-purple-400 cursor-pointer";
+                document.getElementById('btn-tab-archives').className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer";
+            } else {
+                document.getElementById('content-tab-verres').classList.add('hidden');
+                document.getElementById('content-tab-archives').classList.remove('hidden');
+                document.getElementById('btn-tab-verres').className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 cursor-pointer";
+                document.getElementById('btn-tab-archives').className = "flex-1 py-3 text-sm font-semibold border-b-2 border-purple-500 text-purple-400 cursor-pointer";
+                renderArchives();
+            }
+        }
+
+        function cloturerSoiree() {
+            if(boissonsActuelles.length === 0) {
+                openModal({
+                    type: 'alert',
+                    title: 'Action impossible',
+                    message: "Impossible d'archiver une soirée sans aucune consommation enregistrée.",
+                    icon: 'alert-triangle',
+                    iconColorClass: 'bg-orange-500/10 text-orange-400'
+                });
+                return;
+            }
+
+            openModal({
+                type: 'confirm',
+                title: 'Clôturer la soirée ?',
+                message: "Voulez-vous archiver cette session ? Les verres actuels seront réinitialisés et sauvegardés dans votre historique.",
+                icon: 'archive',
+                iconColorClass: 'bg-amber-500/10 text-amber-400',
+                confirmText: 'Clôturer',
+                btnConfirmClass: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white',
+                onConfirm: function() {
+                    const tMax = parseFloat(document.getElementById('kpi-taux-max').innerText);
+                    const nVerres = parseFloat(document.getElementById('kpi-total-verres').innerText);
+                    const d = new Date(boissonsActuelles[0].timestamp);
+                    const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+
+                    archivesSoirees.push({
+                        id: Date.now(),
+                        date: dateStr,
+                        totalVerres: nVerres,
+                        tauxMax: tMax
+                    });
+
+                    boissonsActuelles = [];
+                    document.getElementById('count-archives').innerText = archivesSoirees.length;
+                    sauvegarderDonnees();
+                    calculerTout();
+                    switchTab('tab-archives');
+                }
+            });
+        }
+
+        function supprimerArchive(id) {
+            openModal({
+                type: 'confirm',
+                title: 'Supprimer l\'archive ?',
+                message: "Cette suppression est définitive. Vous perdrez les données de cette soirée historique.",
+                icon: 'trash-2',
+                iconColorClass: 'bg-red-500/10 text-red-400',
+                confirmText: 'Supprimer',
+                btnConfirmClass: 'bg-red-600 hover:bg-red-700 text-white',
+                onConfirm: function() {
+                    archivesSoirees = archivesSoirees.filter(a => a.id !== id);
+                    document.getElementById('count-archives').innerText = archivesSoirees.length;
+                    sauvegarderDonnees();
+                    renderArchives();
+                }
+            });
+        }
+
+        function renderArchives() {
+            const tbody = document.getElementById('liste-archives');
+            tbody.innerHTML = '';
+            if(archivesSoirees.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-500 italic">Aucune soirée archivée pour le moment.</td></tr>`;
+                return;
+            }
+            [...archivesSoirees].reverse().forEach(a => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-gray-800/30 hover:bg-gray-900/10">
+                        <td class="py-2.5 font-medium text-gray-300">${a.date}</td>
+                        <td class="py-2.5 text-gray-400">${a.totalVerres.toFixed(1)} verres</td>
+                        <td class="py-2.5 font-semibold text-orange-400">${a.tauxMax.toFixed(2)} g/L</td>
+                        <td class="py-2.5 text-right">
+                            <button onclick="supprimerArchive(${a.id})" class="text-gray-500 hover:text-red-400 transition-colors cursor-pointer">
+                                <i data-lucide="trash" class="w-4 h-4 inline"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
         }
 
         function calculerTout() {
@@ -261,16 +509,16 @@
             tbody.innerHTML = '';
             let totalVerresStandard = 0;
 
-            boissons.forEach(b => {
+            boissonsActuelles.forEach(b => {
                 const d = new Date(b.timestamp);
                 const heureStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                
                 const grammesAlcool = b.volume * (b.degre / 100) * 0.8;
                 totalVerresStandard += grammesAlcool / 10;
 
                 tbody.innerHTML += `
                     <tr class="border-b border-gray-800/30 hover:bg-gray-900/30">
                         <td class="py-2.5 font-medium text-gray-300">${heureStr}</td>
+                        <td class="py-2.5 text-gray-400 text-xs"><span class="bg-purple-950/40 px-2 py-0.5 rounded border border-purple-900/40 text-purple-300">${b.nomPreset}</span></td>
                         <td class="py-2.5 text-gray-400">${b.volume} ml</td>
                         <td class="py-2.5 text-gray-400">${b.degre} %</td>
                         <td class="py-2.5 text-right">
@@ -291,8 +539,8 @@
             const maintenant = new Date();
             
             let debutTps = maintenant.getTime() - (2 * 3600 * 1000);
-            if(boissons.length > 0) {
-                debutTps = Math.min(boissons[0].timestamp - (30 * 60 * 1000), debutTps);
+            if(boissonsActuelles.length > 0) {
+                debutTps = Math.min(boissonsActuelles[0].timestamp - (30 * 60 * 1000), debutTps);
             }
             let finTps = maintenant.getTime() + (6 * 3600 * 1000);
 
@@ -305,13 +553,13 @@
             let voitureTrouvee = false;
 
             const r = profil.sexe === 'M' ? 0.70 : 0.60; 
-            const beta = 0.15; // Élimination par heure (g/L)
-            const tempsAbsorption = 45 * 60 * 1000; // 45 minutes d'absorption progressive
+            const beta = 0.15; 
+            const tempsAbsorption = 45 * 60 * 1000; 
 
             for (let t = debutTps; t <= finTps; t += 10 * 60 * 1000) {
                 let alcoolTotalDansLeSang = 0;
 
-                boissons.forEach(b => {
+                boissonsActuelles.forEach(b => {
                     if (t < b.timestamp) return; 
 
                     const masseAlcool = b.volume * (b.degre / 100) * 0.8; 
@@ -354,12 +602,11 @@
             }
 
             if(!voitureTrouvee && tauxActuel > SEUIL_LEGAL) {
-                heureReprisePossible = "Plus de 6 heures";
+                heureReprisePossible = "> 6 heures";
             } else if (tauxActuel <= SEUIL_LEGAL) {
                 heureReprisePossible = "Immédiate";
             }
 
-            // --- MAJ INTERFACE ---
             document.getElementById('kpi-taux-actuel').innerText = tauxActuel.toFixed(2);
             document.getElementById('kpi-taux-max').innerText = tauxMax.toFixed(2);
             
@@ -376,7 +623,7 @@
             } else if (tauxActuel > 0 && tauxActuel < SEUIL_LEGAL) {
                 statusInd.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
                 statusTxt.className = "text-xs font-semibold text-amber-400";
-                statusTxt.innerText = "Légal mais vigilance conseillée";
+                statusTxt.innerText = "Vigilance conseillée";
                 picTpsTxt.innerText = "Reprise voiture : OK (légal)";
                 picTpsTxt.className = "text-xs text-emerald-400 font-medium";
             } else {
@@ -387,7 +634,6 @@
                 picTpsTxt.className = "text-xs text-gray-500 italic";
             }
 
-            // --- MAJ GRAPHIC ---
             if(chartInstance) {
                 chartInstance.data.labels = labels;
                 chartInstance.data.datasets[0].data = dataPoints;
@@ -404,11 +650,11 @@
                     labels: [],
                     datasets: [
                         {
-                            label: 'Mon alcoolémie (g/L)',
+                            label: 'Taux calculé (g/L)',
                             data: [],
                             borderColor: '#a855f7', 
                             borderWidth: 3,
-                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            backgroundColor: 'rgba(168, 85, 247, 0.05)',
                             fill: true,
                             tension: 0.3,
                             pointRadius: 0
@@ -431,16 +677,8 @@
                         legend: { display: true, labels: { color: '#9ca3af', font: { size: 11 } } }
                     },
                     scales: {
-                        x: {
-                            grid: { color: '#1f2937' },
-                            ticks: { color: '#9ca3af', maxTicksLimit: 8 }
-                        },
-                        y: {
-                            min: 0,
-                            suggestedMax: 0.8,
-                            grid: { color: '#1f2937' },
-                            ticks: { color: '#9ca3af' }
-                        }
+                        x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', maxTicksLimit: 8 } },
+                        y: { min: 0, suggestedMax: 0.8, grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } }
                     }
                 }
             });
