@@ -424,9 +424,13 @@
             
             if(lp) {
                 profil = JSON.parse(lp);
-                document.getElementById('profil-poids').value = profil.poids;
-                document.getElementById('profil-taille').value = profil.taille;
             }
+            
+            // Correction ici : On force la mise à jour des inputs à l'écran 
+            // que ce soit au démarrage ou après un import
+            document.getElementById('profil-poids').value = profil.poids || 75;
+            document.getElementById('profil-taille').value = profil.taille || 175;
+            
             setSexe(profil.sexe);
 
             if(lb) boissonsActuelles = JSON.parse(lb);
