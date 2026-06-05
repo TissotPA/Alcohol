@@ -30,9 +30,9 @@
             
             <!-- PANNEL GAUCHE : Configuration, Favoris & Ajout -->
             <div class="space-y-6">
-                <!-- Profil -->
-                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm">
-                    <h2 class="text-md font-semibold mb-3 flex items-center gap-2"><i data-lucide="user" class="text-blue-400 w-5 h-5"></i> Mon Profil</h2>
+                <!-- Profil & Sauvegarde -->
+                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm space-y-4">
+                    <h2 class="text-md font-semibold flex items-center gap-2"><i data-lucide="user" class="text-blue-400 w-5 h-5"></i> Mon Profil</h2>
                     <div class="space-y-4">
                         <div>
                             <div class="grid grid-cols-2 gap-2">
@@ -49,6 +49,23 @@
                                 <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Taille (cm)</label>
                                 <input type="number" id="profil-taille" value="175" onchange="sauvegarderProfil()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500 text-sm">
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone de Sauvegarde externe Exporter/Importer -->
+                    <!-- Zone de Sauvegarde externe Exporter/Importer (Logos inversés) -->
+                    <div class="border-t border-gray-800/60 pt-3">
+                        <span class="block text-[10px] text-gray-500 uppercase font-bold mb-2 tracking-wider">Sauvegarde externe</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <!-- Exporter : Flèche qui sort (upload) -->
+                            <button onclick="exporterDonnees()" class="py-1.5 px-2 bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i data-lucide="upload" class="w-3.5 h-3.5 text-blue-400"></i> Exporter
+                            </button>
+                            <!-- Importer : Flèche qui rentre (download) -->
+                            <label class="py-1.5 px-2 bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center">
+                                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> Importer
+                                <input type="file" id="import-file" accept=".json" onchange="importerDonnees(event)" class="hidden">
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -228,7 +245,7 @@
         let boissonsActuelles = [];
         let archivesSoirees = [];
         let chartInstance = null;
-        let actionCallback = null; // Stocke la fonction à exécuter après confirmation
+        let actionCallback = null; 
 
         const SEUIL_LEGAL = 0.5;
 
@@ -270,7 +287,6 @@
                     closeModal();
                 };
             } else {
-                // Mode Alert standard
                 actionsZone.innerHTML = `
                     <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors cursor-pointer">D'accord</button>
                 `;
@@ -293,6 +309,69 @@
             setTimeout(() => {
                 modal.classList.add('hidden');
             }, 200);
+        }
+
+        // --- FONCTIONS IMPORT / EXPORT (NOUVEAU) ---
+        function exporterDonnees() {
+            const packageData = {
+                profil: profil,
+                boissonsActuelles: boissonsActuelles,
+                archivesSoirees: archivesSoirees
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(packageData));
+            const downloadAnchor = document.createElement('a');
+            
+            const dateStr = new Date().toISOString().slice(0,10);
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `alcotrack_backup_${dateStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importerDonnees(event) {
+            const input = event.target;
+            if (!input.files || input.files.length === 0) return;
+            
+            const file = input.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (importedData.profil || importedData.boissonsActuelles || importedData.archivesSoirees) {
+                        if(importedData.profil) profil = importedData.profil;
+                        if(importedData.boissonsActuelles) boissonsActuelles = importedData.boissonsActuelles;
+                        if(importedData.archivesSoirees) archivesSoirees = importedData.archivesSoirees;
+                        
+                        sauvegarderDonnees();
+                        chargerDonnees();
+                        calculerTout();
+                        
+                        openModal({
+                            type: 'alert',
+                            title: 'Importation réussie',
+                            message: 'Vos données, profils et historiques ont été correctement restaurés.',
+                            icon: 'check-circle',
+                            iconColorClass: 'bg-emerald-500/10 text-emerald-400'
+                        });
+                    } else {
+                        throw new Error("Format de fichier invalide");
+                    }
+                } catch (err) {
+                    openModal({
+                        type: 'alert',
+                        title: 'Erreur d\'import',
+                        message: 'Le fichier sélectionné est corrompu ou invalide.',
+                        icon: 'x-circle',
+                        iconColorClass: 'bg-red-500/10 text-red-400'
+                    });
+                }
+                input.value = ''; // Reset l'input file
+            };
+            reader.readAsText(file);
         }
 
         function setHeureActuelle() {
