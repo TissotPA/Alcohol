@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlcoTrack - Suivi de soirée</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        <header class="flex justify-between items-center border-b border-gray-800 pb-4">
+            <div class="flex items-center gap-3">
+                <i data-lucide="beer" class="text-amber-500 w-8 h-8"></i>
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">AlcoTrack</h1>
+            </div>
+            <span class="text-xs text-gray-500 bg-gray-950 px-3 py-1.5 rounded-full border border-gray-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Estimation indicative
+            </span>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="space-y-6">
+                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="user" class="text-blue-400 w-5 h-5"></i> Mon Profil</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Sexe biologique</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setSexe('M')" id="btn-sexe-M" class="py-2 rounded-lg border font-medium transition-all bg-blue-600/20 border-blue-500 text-blue-300 cursor-pointer">Homme</button>
+                                <button onclick="setSexe('F')" id="btn-sexe-F" class="py-2 rounded-lg border font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer">Femme</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Poids (kg)</label>
+                                <input type="number" id="profil-poids" value="75" onchange="calculerTout()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Taille (cm)</label>
+                                <input type="number" id="profil-taille" value="175" onchange="calculerTout()" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl backdrop-blur-sm">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="plus-circle" class="text-emerald-400 w-5 h-5"></i> Ajouter une boisson</h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Quantité (ml)</label>
+                                <input type="number" id="drink-volume" value="250" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Degré (° ou %)</label>
+                                <input type="number" step="0.1" id="drink-degree" value="5" class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Heure de consommation</label>
+                            <div class="flex gap-2">
+                                <input type="time" id="drink-time" class="flex-1 bg-gray-950 border border-gray-800 rounded-lg p-2 text-center text-white focus:outline-none focus:border-emerald-500">
+                                <button onclick="setHeureActuelle()" class="bg-gray-800 hover:bg-gray-700 p-2 rounded-lg border border-gray-700 transition-colors cursor-pointer" title="Heure actuelle">
+                                    <i data-lucide="clock" class="w-5 h-5 text-gray-300"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="ajouterBoisson()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2.5 rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="plus" class="w-5 h-5"></i> Enregistrer le verre
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 space-y-6">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <span id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Taux Actuel
+                        </span>
+                        <div class="my-2">
+                            <span id="kpi-taux-actuel" class="text-3xl font-extrabold text-white">0.00</span>
+                            <span class="text-sm text-gray-400 font-medium"> g/L</span>
+                        </div>
+                        <span id="kpi-conduite-status" class="text-xs font-medium text-emerald-400">Conduite autorisée (Vigilance)</span>
+                    </div>
+
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5 text-orange-400">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i> Pic de la soirée
+                        </span>
+                        <div class="my-2">
+                            <span id="kpi-taux-max" class="text-3xl font-extrabold text-white">0.00</span>
+                            <span class="text-sm text-gray-400 font-medium"> g/L</span>
+                        </div>
+                        <span id="kpi-heure-reprise" class="text-xs text-gray-400 italic">Reprise voiture : immédiate</span>
+                    </div>
+
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-800 flex flex-col justify-between">
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1.5 text-amber-400">
+                            <i data-lucide="glass-water" class="w-4 h-4"></i> Consommation totale
+                        </span>
+                        <div class="my-2">
+                            <span id="kpi-total-verres" class="text-3xl font-extrabold text-white">0</span>
+                            <span class="text-sm text-gray-400 font-medium"> verres standard</span>
+                        </div>
+                        <button onclick="reinitialiserSoiree()" class="text-left text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Réinitialiser la soirée
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="activity" class="text-purple-400 w-5 h-5"></i> Courbe d'alcoolémie présumée</h2>
+                        <button onclick="calculerTout()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 flex items-center gap-1.5 transition-colors cursor-pointer">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser l'état
+                        </button>
+                    </div>
+                    <div class="h-64 relative">
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center gap-2"><i data-lucide="history" class="text-gray-400 w-5 h-5"></i> Verres enregistrés</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-gray-800 text-xs text-gray-400 uppercase font-bold">
+                                    <th class="py-2">Heure</th>
+                                    <th class="py-2">Volume</th>
+                                    <th class="py-2">Degré</th>
+                                    <th class="py-2 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="liste-boissons" class="divide-y divide-gray-800/50 text-sm">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ÉTAT DE L'APPLICATION ---
+        let profil = { sexe: 'M', poids: 75, taille: 175 };
+        let boissons = [];
+        let chartInstance = null;
+
+        const SEUIL_LEGAL = 0.5; 
+
+        // --- INITIALISATION ---
+        window.onload = function() {
+            lucide.createIcons();
+            setHeureActuelle();
+            chargerDonnees();
+            initChart();
+            calculerTout();
+            
+            // Auto-refresh toutes les minutes pour mettre à jour le taux réel en continu
+            setInterval(calculerTout, 60000);
+        };
+
+        function setHeureActuelle() {
+            const maintenant = new Date();
+            const heures = String(maintenant.getHours()).padStart(2, '0');
+            const minutes = String(maintenant.getMinutes()).padStart(2, '0');
+            document.getElementById('drink-time').value = `${heures}:${minutes}`;
+        }
+
+        function setSexe(sexe) {
+            profil.sexe = sexe;
+            document.getElementById('btn-sexe-M').className = sexe === 'M' ? 'py-2 rounded-lg border font-medium transition-all bg-blue-600/20 border-blue-500 text-blue-300 cursor-pointer' : 'py-2 rounded-lg border font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer';
+            document.getElementById('btn-sexe-F').className = sexe === 'F' ? 'py-2 rounded-lg border font-medium transition-all bg-pink-600/20 border-pink-500 text-pink-300 cursor-pointer' : 'py-2 rounded-lg border font-medium transition-all bg-gray-950 border-gray-800 text-gray-400 cursor-pointer';
+            sauvegarderDonnees();
+            calculerTout();
+        }
+
+        // --- PERSISTENCE (Local Storage) ---
+        function sauvegarderDonnees() {
+            profil.poids = parseFloat(document.getElementById('profil-poids').value) || 75;
+            profil.taille = parseFloat(document.getElementById('profil-taille').value) || 175;
+            localStorage.setItem('alcotrack_profil', JSON.stringify(profil));
+            localStorage.setItem('alcotrack_boissons', JSON.stringify(boissons));
+        }
+
+        function chargerDonnees() {
+            const localProfil = localStorage.getItem('alcotrack_profil');
+            const localBoissons = localStorage.getItem('alcotrack_boissons');
+            if(localProfil) {
+                profil = JSON.parse(localProfil);
+                document.getElementById('profil-poids').value = profil.poids;
+                document.getElementById('profil-taille').value = profil.taille;
+                setSexe(profil.sexe);
+            }
+            if(localBoissons) {
+                boissons = JSON.parse(localBoissons);
+            }
+        }
+
+        function reinitialiserSoiree() {
+            if(confirm("Voulez-vous vraiment effacer l'historique de cette soirée ?")) {
+                boissons = [];
+                sauvegarderDonnees();
+                calculerTout();
+            }
+        }
+
+        // --- LOGIQUE METIER & ALGORITHME ---
+        function ajouterBoisson() {
+            const vol = parseFloat(document.getElementById('drink-volume').value);
+            const deg = parseFloat(document.getElementById('drink-degree').value);
+            const timeStr = document.getElementById('drink-time').value;
+
+            if(!vol || !deg || !timeStr) return;
+
+            const [h, m] = timeStr.split(':').map(Number);
+            const dateBoisson = new Date();
+            dateBoisson.setHours(h, m, 0, 0);
+
+            // Gestion du passage à minuit
+            if(dateBoisson > new Date()) {
+                dateBoisson.setDate(dateBoisson.getDate() - 1);
+            }
+
+            boissons.push({
+                id: Date.now(),
+                volume: vol,
+                degre: deg,
+                timestamp: dateBoisson.getTime()
+            });
+
+            boissons.sort((a, b) => a.timestamp - b.timestamp);
+
+            sauvegarderDonnees();
+            calculerTout();
+            setHeureActuelle(); 
+        }
+
+        function supprimerBoisson(id) {
+            boissons = boissons.filter(b => b.id !== id);
+            sauvegarderDonnees();
+            calculerTout();
+        }
+
+        function calculerTout() {
+            profil.poids = parseFloat(document.getElementById('profil-poids').value) || 75;
+            
+            const tbody = document.getElementById('liste-boissons');
+            tbody.innerHTML = '';
+            let totalVerresStandard = 0;
+
+            boissons.forEach(b => {
+                const d = new Date(b.timestamp);
+                const heureStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                
+                const grammesAlcool = b.volume * (b.degre / 100) * 0.8;
+                totalVerresStandard += grammesAlcool / 10;
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-gray-800/30 hover:bg-gray-900/30">
+                        <td class="py-2.5 font-medium text-gray-300">${heureStr}</td>
+                        <td class="py-2.5 text-gray-400">${b.volume} ml</td>
+                        <td class="py-2.5 text-gray-400">${b.degre} %</td>
+                        <td class="py-2.5 text-right">
+                            <button onclick="supprimerBoisson(${b.id})" class="text-gray-500 hover:text-red-400 transition-colors cursor-pointer">
+                                <i data-lucide="x" class="w-4 h-4 inline"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+            document.getElementById('kpi-total-verres').innerText = totalVerresStandard.toFixed(1);
+
+            genererGraphiqueEtKpi();
+        }
+
+        function genererGraphiqueEtKpi() {
+            const maintenant = new Date();
+            
+            let debutTps = maintenant.getTime() - (2 * 3600 * 1000);
+            if(boissons.length > 0) {
+                debutTps = Math.min(boissons[0].timestamp - (30 * 60 * 1000), debutTps);
+            }
+            let finTps = maintenant.getTime() + (6 * 3600 * 1000);
+
+            let labels = [];
+            let dataPoints = [];
+            
+            let tauxMax = 0;
+            let tauxActuel = 0;
+            let heureReprisePossible = "Immédiate";
+            let voitureTrouvee = false;
+
+            const r = profil.sexe === 'M' ? 0.70 : 0.60; 
+            const beta = 0.15; // Élimination par heure (g/L)
+            const tempsAbsorption = 45 * 60 * 1000; // 45 minutes d'absorption progressive
+
+            for (let t = debutTps; t <= finTps; t += 10 * 60 * 1000) {
+                let alcoolTotalDansLeSang = 0;
+
+                boissons.forEach(b => {
+                    if (t < b.timestamp) return; 
+
+                    const masseAlcool = b.volume * (b.degre / 100) * 0.8; 
+                    const tauxTheoriqueMax = masseAlcool / (profil.poids * r);
+
+                    let facteurAbsorption = 1;
+                    if (t < b.timestamp + tempsAbsorption) {
+                        facteurAbsorption = (t - b.timestamp) / tempsAbsorption;
+                    }
+
+                    const heuresEcoulees = (t - b.timestamp) / (3600 * 1000);
+                    const elimination = beta * heuresEcoulees;
+
+                    let contribution = (tauxTheoriqueMax * facteurAbsorption) - elimination;
+                    if(contribution < 0) contribution = 0;
+
+                    alcoolTotalDansLeSang += contribution;
+                });
+
+                if(alcoolTotalDansLeSang < 0) alcoolTotalDansLeSang = 0;
+
+                const datePoint = new Date(t);
+                labels.push(`${String(datePoint.getHours()).padStart(2, '0')}:${String(datePoint.getMinutes()).padStart(2, '0')}`);
+                dataPoints.push(alcoolTotalDansLeSang);
+
+                if(alcoolTotalDansLeSang > tauxMax) tauxMax = alcoolTotalDansLeSang;
+
+                if(Math.abs(t - maintenant.getTime()) < 5 * 60 * 1000) {
+                    tauxActuel = alcoolTotalDansLeSang;
+                }
+
+                if(t >= maintenant.getTime()) {
+                    if(alcoolTotalDansLeSang < SEUIL_LEGAL && !voitureTrouvee) {
+                        if (alcoolTotalDansLeSang === 0 || t === finTps || (t + 10 * 60 * 1000 > finTps)) {
+                            heureReprisePossible = `${String(datePoint.getHours()).padStart(2, '0')}:${String(datePoint.getMinutes()).padStart(2, '0')}`;
+                            voitureTrouvee = true;
+                        }
+                    }
+                }
+            }
+
+            if(!voitureTrouvee && tauxActuel > SEUIL_LEGAL) {
+                heureReprisePossible = "Plus de 6 heures";
+            } else if (tauxActuel <= SEUIL_LEGAL) {
+                heureReprisePossible = "Immédiate";
+            }
+
+            // --- MAJ INTERFACE ---
+            document.getElementById('kpi-taux-actuel').innerText = tauxActuel.toFixed(2);
+            document.getElementById('kpi-taux-max').innerText = tauxMax.toFixed(2);
+            
+            const statusInd = document.getElementById('status-indicator');
+            const statusTxt = document.getElementById('kpi-conduite-status');
+            const picTpsTxt = document.getElementById('kpi-heure-reprise');
+
+            if(tauxActuel >= SEUIL_LEGAL) {
+                statusInd.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse";
+                statusTxt.className = "text-xs font-semibold text-red-400";
+                statusTxt.innerText = "Conduite INTERDITE";
+                picTpsTxt.innerText = `Reprise auto estimée : vers ${heureReprisePossible}`;
+                picTpsTxt.className = "text-xs text-orange-400 font-medium";
+            } else if (tauxActuel > 0 && tauxActuel < SEUIL_LEGAL) {
+                statusInd.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+                statusTxt.className = "text-xs font-semibold text-amber-400";
+                statusTxt.innerText = "Légal mais vigilance conseillée";
+                picTpsTxt.innerText = "Reprise voiture : OK (légal)";
+                picTpsTxt.className = "text-xs text-emerald-400 font-medium";
+            } else {
+                statusInd.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                statusTxt.className = "text-xs font-medium text-emerald-400";
+                statusTxt.innerText = "À jeun (0.00 g/L)";
+                picTpsTxt.innerText = "Reprise voiture : Immédiate";
+                picTpsTxt.className = "text-xs text-gray-500 italic";
+            }
+
+            // --- MAJ GRAPHIC ---
+            if(chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = dataPoints;
+                chartInstance.data.datasets[1].data = new Array(labels.length).fill(SEUIL_LEGAL);
+                chartInstance.update();
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('evolutionChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Mon alcoolémie (g/L)',
+                            data: [],
+                            borderColor: '#a855f7', 
+                            borderWidth: 3,
+                            backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Limite légale (0.5 g/L)',
+                            data: [],
+                            borderColor: '#ef4444', 
+                            borderWidth: 1.5,
+                            borderDash: [6, 6],
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, labels: { color: '#9ca3af', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1f2937' },
+                            ticks: { color: '#9ca3af', maxTicksLimit: 8 }
+                        },
+                        y: {
+                            min: 0,
+                            suggestedMax: 0.8,
+                            grid: { color: '#1f2937' },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
