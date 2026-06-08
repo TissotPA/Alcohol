@@ -7,6 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <style>
         body { background-color: #0b0f19; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
     </style>
@@ -153,9 +155,14 @@
                 <div class="bg-gray-900/50 p-5 rounded-2xl border border-gray-800 shadow-xl">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-md font-semibold flex items-center gap-2"><i data-lucide="activity" class="text-purple-400 w-5 h-5"></i> Évolution de l'alcoolémie</h2>
-                        <button onclick="calculerTout()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 flex items-center gap-1.5 transition-colors cursor-pointer">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="supprimerReticule()" id="btn-reticule" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-purple-700/50 text-purple-300 hidden items-center gap-1.5 transition-colors cursor-pointer">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i> Réticule
+                            </button>
+                            <button onclick="calculerTout()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg border border-gray-700 flex items-center gap-1.5 transition-colors cursor-pointer">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualiser
+                            </button>
+                        </div>
                     </div>
                     <div class="h-56 relative">
                         <canvas id="evolutionChart"></canvas>
@@ -245,9 +252,105 @@
         let boissonsActuelles = [];
         let archivesSoirees = [];
         let chartInstance = null;
-        let actionCallback = null; 
+        let actionCallback = null;
+
+        let crosshairIndex = -1;
+        let nowLabelIndex = -1;
+        let isDraggingCrosshair = false;
 
         const SEUIL_LEGAL = 0.5;
+
+        // --- PLUGIN CUSTOM : Ligne « Maintenant » + Réticule interactif ---
+        const customChartPlugin = {
+            id: 'customChartPlugin',
+            afterDraw(chart) {
+                const ctx = chart.ctx;
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                if (!xScale || !yScale) return;
+
+                // == LIGNE « MAINTENANT » ==
+                if (nowLabelIndex >= 0) {
+                    const x = xScale.getPixelForValue(nowLabelIndex);
+                    if (x >= xScale.left && x <= xScale.right) {
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(x, yScale.top);
+                        ctx.lineTo(x, yScale.bottom);
+                        ctx.strokeStyle = 'rgba(34, 197, 94, 0.85)';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 4]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.font = 'bold 9px Segoe UI, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'rgba(34, 197, 94, 0.9)';
+                        ctx.fillText('▼ Maintenant', x, yScale.top - 3);
+                        ctx.restore();
+                    }
+                }
+
+                // == RÉTICULE INTERACTIF ==
+                if (crosshairIndex >= 0 && chart.data.labels.length > 0) {
+                    const ci = Math.min(crosshairIndex, chart.data.labels.length - 1);
+                    const x = xScale.getPixelForValue(ci);
+                    if (x >= xScale.left && x <= xScale.right) {
+                        const label = chart.data.labels[ci] || '';
+                        const value = chart.data.datasets[0].data[ci] || 0;
+                        ctx.save();
+
+                        // Ligne verticale
+                        ctx.beginPath();
+                        ctx.moveTo(x, yScale.top);
+                        ctx.lineTo(x, yScale.bottom);
+                        ctx.strokeStyle = 'rgba(168, 85, 247, 0.9)';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Point d'intersection
+                        const yPx = yScale.getPixelForValue(value);
+                        if (yPx >= yScale.top && yPx <= yScale.bottom) {
+                            ctx.beginPath();
+                            ctx.arc(x, yPx, 5, 0, Math.PI * 2);
+                            ctx.fillStyle = '#a855f7';
+                            ctx.fill();
+                            ctx.strokeStyle = '#fff';
+                            ctx.lineWidth = 1.5;
+                            ctx.stroke();
+                        }
+
+                        // Tooltip
+                        const color = value >= SEUIL_LEGAL ? '#f87171' : value > 0 ? '#fbbf24' : '#34d399';
+                        const tooltipText = `${label}  •  ${value.toFixed(2)} g/L`;
+                        ctx.font = 'bold 11px Segoe UI, sans-serif';
+                        const tw = ctx.measureText(tooltipText).width;
+                        let tx = x + 10;
+                        if (tx + tw + 16 > xScale.right) tx = x - tw - 22;
+                        const ty = yScale.top + 8;
+                        const pad = 7, rw = tw + pad * 2, rh = 22, rx = tx - pad, ry = ty, r = 5;
+                        ctx.fillStyle = 'rgba(15, 10, 35, 0.92)';
+                        ctx.strokeStyle = 'rgba(168, 85, 247, 0.55)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(rx + r, ry); ctx.lineTo(rx + rw - r, ry);
+                        ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
+                        ctx.lineTo(rx + rw, ry + rh - r);
+                        ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh);
+                        ctx.lineTo(rx + r, ry + rh);
+                        ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r);
+                        ctx.lineTo(rx, ry + r);
+                        ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.fillStyle = color;
+                        ctx.textAlign = 'left';
+                        ctx.fillText(tooltipText, tx, ty + 15);
+                        ctx.restore();
+                    }
+                }
+            }
+        };
 
         window.onload = function() {
             lucide.createIcons();
@@ -672,6 +775,7 @@
 
                 if(Math.abs(t - maintenant.getTime()) < 5 * 60 * 1000) {
                     tauxActuel = alcoolTotalDansLeSang;
+                    nowLabelIndex = labels.length - 1;
                 }
 
                 if(t >= maintenant.getTime()) {
@@ -726,6 +830,7 @@
         }
 
         function initChart() {
+            Chart.register(customChartPlugin);
             const ctx = document.getElementById('evolutionChart').getContext('2d');
             chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -735,7 +840,7 @@
                         {
                             label: 'Taux calculé (g/L)',
                             data: [],
-                            borderColor: '#a855f7', 
+                            borderColor: '#a855f7',
                             borderWidth: 3,
                             backgroundColor: 'rgba(168, 85, 247, 0.05)',
                             fill: true,
@@ -745,7 +850,7 @@
                         {
                             label: 'Limite légale (0.5 g/L)',
                             data: [],
-                            borderColor: '#ef4444', 
+                            borderColor: '#ef4444',
                             borderWidth: 1.5,
                             borderDash: [6, 6],
                             fill: false,
@@ -757,7 +862,16 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: true, labels: { color: '#9ca3af', font: { size: 11 } } }
+                        legend: { display: true, labels: { color: '#9ca3af', font: { size: 11 } } },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                                onPanStart: function({ chart, event }) {
+                                    return !isDraggingCrosshair;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', maxTicksLimit: 8 } },
@@ -765,6 +879,88 @@
                     }
                 }
             });
+            initCrosshairEvents(chartInstance);
+        }
+
+        function supprimerReticule() {
+            crosshairIndex = -1;
+            document.getElementById('btn-reticule').classList.add('hidden');
+            document.getElementById('btn-reticule').classList.remove('flex');
+            if (chartInstance) chartInstance.draw();
+        }
+
+        function showReticuleBtn() {
+            const btn = document.getElementById('btn-reticule');
+            btn.classList.remove('hidden');
+            btn.classList.add('flex');
+        }
+
+        function initCrosshairEvents(chart) {
+            const canvas = chart.canvas;
+
+            function getRelX(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                return clientX - rect.left;
+            }
+
+            function getIndexFromX(x) {
+                const xScale = chart.scales.x;
+                if (!xScale || x < xScale.left || x > xScale.right) return -1;
+                const raw = xScale.getValueForPixel(x);
+                return Math.max(0, Math.min(Math.round(raw), chart.data.labels.length - 1));
+            }
+
+            // --- Souris ---
+            canvas.addEventListener('mousedown', (e) => {
+                const x = getRelX(e);
+                const idx = getIndexFromX(x);
+                if (idx >= 0) {
+                    crosshairIndex = idx;
+                    isDraggingCrosshair = true;
+                    showReticuleBtn();
+                    chart.draw();
+                }
+                e.stopPropagation();
+            }, { capture: true });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDraggingCrosshair) return;
+                const x = getRelX(e);
+                const idx = getIndexFromX(x);
+                if (idx >= 0) { crosshairIndex = idx; chart.draw(); }
+                e.stopPropagation();
+            }, { capture: true });
+
+            canvas.addEventListener('mouseup', (e) => {
+                isDraggingCrosshair = false;
+            }, { capture: true });
+
+            // --- Tactile ---
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) { isDraggingCrosshair = false; return; }
+                const x = getRelX(e);
+                const idx = getIndexFromX(x);
+                if (idx >= 0) {
+                    crosshairIndex = idx;
+                    isDraggingCrosshair = true;
+                    showReticuleBtn();
+                    chart.draw();
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isDraggingCrosshair || e.touches.length !== 1) return;
+                const x = getRelX(e);
+                const idx = getIndexFromX(x);
+                if (idx >= 0) { crosshairIndex = idx; chart.draw(); }
+                e.preventDefault();
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', () => {
+                isDraggingCrosshair = false;
+            }, { passive: false });
         }
     </script>
 </body>
